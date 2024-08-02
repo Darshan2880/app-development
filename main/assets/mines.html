@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MINES</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color:#1D2C54;
+            margin: 0;
+        }
+        h1, h2 {
+            margin: 10px;
+        }
+        .button-container, .grid-container, .controls-container {
+            margin: 10px;
+        }
+        button, input, select {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+             background-color: #30488A;
+        }
+        .bet-button, .cashout-button {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .bet-button:hover, .cashout-button:hover {
+            background-color: #45a049;
+        }
+        .grid-button {
+            width: 50px;
+            height: 50px;
+            background-color: #2E236C;
+            margin: 2px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .hidden {
+            background-color: #30488A;
+        }
+        .gem {
+             background-color: transparent;
+             background-image: url('gem.png'); /* Replace 'gem.png' with your actual image file */
+             background-size: cover;
+        }
+        .mine {
+             background-color: transparent;
+             background-image: url('mine.png'); /* Replace 'gem.png' with your actual image file */
+             background-size: cover;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(5, 50px);
+            grid-gap: 2px;
+        }
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border: 2px solid #4CAF50;
+            padding: 20px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: none;
+        }
+        .popup h2 {
+            margin: 0 0 10px 0;
+        }
+        .popup button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .popup button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+<div id="game-page">
+    <h1>MINES </h1>
+    <h2 id="balance-display">Balance: ₹ 100</h2>
+    <div class="controls-container">
+        <label for="currency-select">Select Currency:</label>
+        <select id="currency-select">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+            <option value="INR">INR</option>
+            <!-- Add more currencies as needed -->
+        </select>
+    </div>
+    <div class="controls-container">
+        <label for="mines-select">Number of Mines:</label>
+        <input type="number" id="mines-select" min="1" max="24" value="1">
+    </div>
+    <div class="controls-container">
+        <label for="bet-amount">Bet Amount:</label>
+        <input type="number" id="bet-amount" min="1" value="1">
+    </div>
+    <div class="controls-container">
+        <button class="bet-button" onclick="placeBet()">Bet</button>
+    </div>
+
+    <div class="grid-container" id="grid-container">
+        <!-- Grid buttons will be added here by JavaScript -->
+    </div>
+
+    <button class="cashout-button" onclick="cashout()" disabled>Cashout</button>
+    <!--<button onclick="window.location.href='dashboard.html'" style="padding: 10px 20px; font-size: 16px; background-color: #FF5733; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">Back to Dashboard</button>-->
+</div>
+
+<div class="popup" id="popup">
+    <h2 id="popup-message"></h2>
+    <button onclick="closePopup()">OK</button>
+</div>
+
+<script>
+    let balance = 100; // Starting balance
+    let betAmount = 0;
+    let numMines = 1;
+    let gemsFound = 0;
+    let grid = [];
+    let gameStarted = false; // Track if game has started
+
+    function startGame() {
+        document.getElementById('game-page').style.display = 'block';
+        updateBalanceDisplay();
+        generateGrid(); // Generate grid when the game starts
+        gameStarted = true; // Game has started
+    }
+
+    function updateBalanceDisplay() {
+        document.getElementById('balance-display').innerText = `Balance: $${balance}`;
+    }
+
+    function placeBet() {
+        if (!gameStarted) return; // Ensure game has started
+        betAmount = parseInt(document.getElementById('bet-amount').value);
+        numMines = parseInt(document.getElementById('mines-select').value);
+        document.querySelector('.cashout-button').disabled = false; // Enable the Cashout button
+        disableControls(true); // Disable other controls
+        enableGridButtons(true); // Enable grid buttons
+
+        // Select a random grid button
+        const randomIndex = Math.floor(Math.random() * 25);
+        const randomButton = grid[randomIndex].button;
+
+        // Enable interaction with the random button
+        randomButton.disabled = false;
+        randomButton.style.cursor = "pointer";
+    }
+
+    function disableControls(disable) {
+        const buttons = document.querySelectorAll('.controls-container button');
+        const inputs = document.querySelectorAll('.controls-container input, .controls-container select');
+        buttons.forEach(button => {
+            button.disabled = disable;
+        });
+        inputs.forEach(input => {
+            input.disabled = disable;
+        });
+    }
+
+    function enableGridButtons(enable) {
+        const gridButtons = document.querySelectorAll('.grid-button');
+        gridButtons.forEach(button => {
+            button.disabled = !enable;
+        });
+    }
+
+    function generateGrid() {
+        const gridContainer = document.getElementById('grid-container');
+        gridContainer.innerHTML = ''; // Clear previous grid
+        grid = [];
+        gemsFound = 0;
+
+        // Create grid with hidden cells
+        for (let i = 0; i < 25; i++) {
+            const button = document.createElement('button');
+            button.classList.add('grid-button', 'hidden');
+            button.onclick = () => revealCell(button, i);
+            button.disabled = true; // Initially disable buttons
+            button.style.cursor = "pointer"; // Change cursor to pointer
+            gridContainer.appendChild(button);
+            grid.push({ button, hasMine: false });
+        }
+
+        // Randomly place mines
+        let minesPlaced = 0;
+        while (minesPlaced < numMines) {
+            const index = Math.floor(Math.random() * 25);
+            if (!grid[index].hasMine) {
+                grid[index].hasMine = true;
+                minesPlaced++;
+            }
+        }
+    }
+
+    function revealCell(button, index) {
+        if (!button.classList.contains('hidden')) return; // Already revealed
+
+        button.classList.remove('hidden');
+        if (grid[index].hasMine) {
+            button.classList.add('mine');
+            balance -= betAmount;
+            updateBalanceDisplay();
+            showPopup('Mine');
+            endGame();
+        } else {
+            button.classList.add('gem');
+            gemsFound++;
+            let multiplier = numMines * gemsFound;
+            updateBalanceDisplay(); // Update balance display (optional)
+        }
+    }
+
+    function cashout() {
+        let multiplier = numMines * gemsFound;
+        balance += betAmount * multiplier; // Update balance
+        showPopup(`${multiplier}x`);
+        document.querySelector('.cashout-button').disabled = true; // Disable the Cashout button after cashing out
+        disableControls(true); // Disable other controls
+        enableGridButtons(false); // Disable grid buttons
+        updateBalanceDisplay(); // Update balance display
+        revealAll(); // Reveal all grid cells after cashout
+        setTimeout(() => {
+            restartGame(); // Restart the game after a delay
+        }, 2000); // 2 seconds delay before restarting
+    }
+
+    function endGame() {
+        revealAll();
+        setTimeout(() => {
+            restartGame(); // Restart the game after a delay
+        }, 2000); // 2 seconds delay before restarting
+    }
+
+    function restartGame() {
+        generateGrid();
+        disableControls(false); // Enable controls for the new game
+        document.querySelector('.cashout-button').disabled = true; // Disable the Cashout button initially
+    }
+
+    function revealAll() {
+        grid.forEach(cell => {
+            cell.button.classList.remove('hidden');
+            if (cell.hasMine) {
+                cell.button.classList.add('mine');
+            } else {
+                cell.button.classList.add('gem');
+            }
+        });
+    }
+
+    function showPopup(message) {
+        const popup = document.getElementById('popup');
+        document.getElementById('popup-message').innerText = message;
+        popup.style.display = 'block';
+    }
+
+    function closePopup() {
+        const popup = document.getElementById('popup');
+        popup.style.display = 'none';
+    }
+
+    // Initialize game on page load
+    window.onload = startGame;
+</script>
+</body>
+</html>

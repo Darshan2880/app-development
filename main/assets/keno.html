@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keno Gambling Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+             background-color: #30488A;
+        }
+        #game {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            backgroung-color:#42477A;
+        }
+        #numbers {
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .number {
+            display: inline-block;
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 50px; /* Adjust button width */
+            height: 50px; /* Adjust button height */
+            font-size: 16px;
+        }
+        .number.selected {
+            background-color: #6495ED; /* Blue color for selected numbers */
+            color: white;
+        }
+        .number.matched {
+            background-color: #32CD32; /* Green color for matched numbers */
+        }
+        #controls {
+            margin: 20px 0;
+        }
+        #controls input {
+            padding: 10px;
+            margin: 0 10px;
+            width: 100px; /* Adjust input width */
+            text-align: center;
+        }
+        #controls button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        #results {
+            margin-top: 20px;
+        }
+        #selected-numbers {
+            list-style-type: none;
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        #selected-numbers li {
+            margin: 5px;
+            padding: 10px;
+            background-color: #ff6347; /* Red color for selected numbers */
+            color: white;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+<div id="game">
+    <h1>Keno Gambling Game</h1>
+    <p id="balance">Balance: RS 1000</p> <!-- Example of balance display -->
+    <div id="numbers">
+        <!-- Generate number buttons in 4 rows -->
+        <script>
+            for (let i = 1; i <= 40; i++) {
+                document.write(`<button id="number-${i}" class="number" onclick="toggleSelection(${i})">${i}</button>`);
+                if (i % 10 === 0) {
+                    document.write('<br>');
+                }
+            }
+        </script>
+    </div>
+    <div id="controls">
+        <input type="number" id="betAmount" placeholder="Enter bet amount">
+        <button onclick="play()">Play</button>
+        <button onclick="clearSelection()">Clear Selection</button>
+    </div>
+    <div id="results">
+        <p id="outcome"></p>
+        <p id="multiplier"></p> <!-- Display multiplier here -->
+        <ul id="selected-numbers"></ul>
+    </div>
+</div>
+
+<script>
+    let selectedNumbers = [];
+    let balance = 1000; // Example initial balance
+
+    function toggleSelection(number) {
+        const index = selectedNumbers.indexOf(number);
+        if (index === -1 && selectedNumbers.length < 10) {
+            selectedNumbers.push(number);
+            document.getElementById('number-' + number).classList.add('selected');
+        } else {
+            selectedNumbers.splice(index, 1);
+            document.getElementById('number-' + number).classList.remove('selected', 'matched');
+        }
+    }
+
+    function play() {
+        const betAmount = parseInt(document.getElementById('betAmount').value);
+        if (isNaN(betAmount) || betAmount <= 0) {
+            alert('Please enter a valid bet amount.');
+            return;
+        }
+        if (selectedNumbers.length === 0) {
+            alert('Please select at least one number.');
+            return;
+        }
+
+        const winningNumbers = [];
+        while (winningNumbers.length < 10) {
+            const randomIndex = Math.floor(Math.random() * 40) + 1; // Random number between 1 and 40
+            if (!winningNumbers.includes(randomIndex)) {
+                winningNumbers.push(randomIndex);
+            }
+        }
+
+        const matchedNumbers = selectedNumbers.filter(num => winningNumbers.includes(num));
+        let winningsMultiplier = 1; // Initialize multiplier
+        matchedNumbers.forEach(num => {
+            winningsMultiplier *= 2; // Increase multiplier for each matched number
+        });
+
+        const outcome = `Winning numbers: ₹{winningNumbers.join(', ')}`;
+        document.getElementById('outcome').textContent = outcome;
+
+        const multiplierDisplay = document.getElementById('multiplier');
+        multiplierDisplay.textContent = `Multiplier: x₹{winningsMultiplier}`;
+
+        if (matchedNumbers.length > 0) {
+            balance += betAmount * winningsMultiplier;
+            document.getElementById('balance').textContent = `Balance: $${balance}`;
+        } else {
+            balance -= betAmount;
+            document.getElementById('balance').textContent = `Balance: $${balance}`;
+        }
+
+        const selectedNumbersList = document.getElementById('selected-numbers');
+        selectedNumbersList.innerHTML = '';
+        selectedNumbers.forEach(num => {
+            const li = document.createElement('li');
+            li.textContent = num;
+            selectedNumbersList.appendChild(li);
+
+            if (winningNumbers.includes(num)) {
+                document.getElementById('number-' + num).classList.add('matched');
+            } else {
+                document.getElementById('number-' + num).classList.remove('matched');
+            }
+        });
+
+        setTimeout(() => {
+            clearSelection();
+            document.getElementById('outcome').textContent = '';
+            multiplierDisplay.textContent = ''; // Clear multiplier display
+        }, 5000); // Reset after 5 seconds
+    }
+
+    function clearSelection() {
+        selectedNumbers.forEach(num => {
+            document.getElementById('number-' + num).classList.remove('selected', 'matched');
+        });
+        selectedNumbers = [];
+        document.getElementById('selected-numbers').innerHTML = '';
+        document.getElementById('outcome').textContent = '';
+        document.getElementById('multiplier').textContent = ''; // Clear multiplier display
+    }
+</script>
+</body>
+</html>
+
+
+
+

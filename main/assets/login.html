@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gambling Web Application</title>
+    <style>
+        h2 {
+            color: black;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            font-family: sans-serif;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: url(bg.jpg);
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+
+        .container {
+            padding: 20px 30px;
+            width: 300px;
+            backdrop-filter: blur(50px);
+            border-radius: 5px;
+            background: linear-gradient(270deg, lightpink, lightblue);
+            border: 3px solid black;
+        }
+
+        .darshan {
+            padding: 10px 20px;
+        }
+
+        .darshan h2 {
+            text-align: center;
+            color: black;
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+        }
+
+        .form-group label {
+            display: block;
+            background: linear-gradient(270deg, lightpink, lightblue);
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px 20px;
+            border: none;
+            outline: none;
+            background: none;
+            border-bottom: 1px solid #12151e;
+            color: #fff;
+        }
+
+        .submit-button {
+            padding: 10px 20px;
+            color: #fff;
+            border: none;
+            outline: none;
+            background: #0cc0df;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            width: 100%;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+        .container {
+            text-align: center;
+            background: linear-gradient(270deg, lightpink, lightblue);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin: 15px 0;
+        }
+
+        input[type="text"], input[type="email"], input[type="tel"] {
+            width: 80%;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid black;
+            margin-top: 5px;
+        }
+
+        .submit-button {
+            width: 100px;
+            padding: 10px;
+            margin: 20px 0;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: green;
+            color: white;
+        }
+
+        .gambling-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background-color:#1D2C54;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .balance {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .game-buttons button, .action-buttons button {
+            width: 100px;
+            height: 100px;
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-size: cover;
+            background-position: center;
+            color: transparent;
+        }
+
+        .mines-button {
+            background-image: url('7219197.jpg');
+        }
+
+        .keno-button {
+            background-image: url('kenoj.jpg');
+        }
+
+        .deposit-button {
+            background-image: url('depositphot.jpg');
+        }
+
+        .withdraw-button {
+            background-image: url('with.jpg');
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="darshan">
+        <h2>User Information</h2>
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" placeholder="Enter your username" required>
+        </div>
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+        </div>
+        <div class="form-group">
+            <label for="phone">Phone No:</label>
+            <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
+        </div>
+        <button class="submit-button" onclick="submitForm()">Submit</button>
+    </div>
+</div>
+
+<div class="gambling-container" id="gamblingContainer">
+   <!-- <div class="balance">
+        Balance: $1000
+    </div>-->
+    <div class="game-buttons">
+        <button class="mines-button" onclick="goToMinesPage()">Mines</button>
+        <button class="keno-button" onclick="goToKenoPage()">Keno</button>
+    </div>
+    <div class="action-buttons">
+        <button class="deposit-button" onclick="deposit()">Deposit</button>
+        <button class="withdraw-button" onclick="withdraw()">Withdraw</button>
+    </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-firestore.js"></script>
+
+<script>
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_STORAGE_BUCKET",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Save balance to Firebase
+    function saveBalance(username, balance) {
+        db.collection("users").doc(username).set({
+            balance: balance
+        }).then(() => {
+            console.log("Balance saved successfully!");
+        }).catch((error) => {
+            console.error("Error saving balance: ", error);
+        });
+    }
+
+    // Retrieve balance from Firebase
+    function getBalance(username) {
+        db.collection("users").doc(username).get().then((doc) => {
+            if (doc.exists) {
+                const balance = doc.data().balance;
+                document.querySelector('.balance').innerText = `Balance: $${balance}`;
+            } else {
+                console.log("No such document!");
+            }
+        }).catch((error) => {
+            console.error("Error getting balance: ", error);
+        });
+    }
+
+    // Function to submit the form
+    function submitForm() {
+        const username = document.getElementById('username').value;
+        const email = document.getElementById('email').value;
+        const phone = document.getElementById('phone').value;
+        if (username && email && phone) {
+            document.querySelector('.container').style.display = 'none';
+            document.getElementById('gamblingContainer').style.display = 'flex';
+            getBalance(username); // Retrieve and display the balance when the form is submitted
+        } else {
+            alert('Please fill out all fields.');
+        }
+    }
+
+    // Function to handle deposit
+    function deposit() {
+        const username = document.getElementById('username').value;
+        let balance = parseInt(document.querySelector('.balance').innerText.replace('Balance: $', ''));
+        const amount = parseInt(prompt("Enter deposit amount:"));
+        if (!isNaN(amount)) {
+            balance += amount;
+            document.querySelector('.balance').innerText = `Balance: $${balance}`;
+            saveBalance(username, balance);
+        } else {
+            alert("Invalid amount");
+        }
+    }
+
+    // Function to handle withdrawal
+    function withdraw() {
+        const username = document.getElementById('username').value;
+        let balance = parseInt(document.querySelector('.balance').innerText.replace('Balance: $', ''));
+        const amount = parseInt(prompt("Enter withdraw amount:"));
+        if (!isNaN(amount) && amount <= balance) {
+            balance -= amount;
+            document.querySelector('.balance').innerText = `Balance: $${balance}`;
+            saveBalance(username, balance);
+        } else {
+            alert("Invalid amount or insufficient balance");
+        }
+    }
+
+    // Function to navigate to Mines page
+    function goToMinesPage() {
+        // Assuming the Mines page URL is "mines.html"
+        window.location.href = "mines.html";
+    }
+
+    // Function to navigate to Keno page
+    function goToKenoPage() {
+        window.location.href = "keno.html";
+    }
+</script>
+</body>
+</html>
